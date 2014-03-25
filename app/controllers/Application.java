@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import models.*;
+import models.NotificationHost.Event;
 import models.NotificationHost.Notification;
 import models.NotificationHost.Chat;
 
@@ -17,7 +18,7 @@ public class Application extends Controller {
     }
     
     public static void getN() throws InterruptedException, ExecutionException {
-    	Object[] notifications = await(NotificationHost.get().stream.getNotifications());
+    	Event[] notifications = await(NotificationHost.get().stream.getNotifications());
     	renderJSON(notifications);
     }
     
