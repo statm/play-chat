@@ -1,4 +1,44 @@
 #{extends 'main.html' /}
-#{set title:'Home' /}
+#{set title:'Notification' /}
 
-#{welcome /}
+<button id="addNotification" style="width: 400px; height: 80px;">Add Notification</button>
+<button id="addChat" style="width: 400px; height: 80px;">Add Chat</button>
+
+<script type="text/javascript">
+
+	var lastTime = new Date().getTime();
+
+    // Retrieve new messages
+    var getMessages = function() {
+        $.ajax({
+            url: "/getN",
+            success: function(events) {
+                console.log("============= interval time: " + (new Date().getTime() - lastTime) / 1000);
+        		lastTime = new Date().getTime();
+                
+                $(events).each(function() {
+                    display(this);
+                });
+                
+                getMessages();
+            },
+            dataType: 'json'
+        });
+    }
+    
+    // Display a message
+    var display = function(event) {
+        console.log(event);
+    }
+    
+    $("#addNotification").click(function() {
+    	$.get("/addN");
+    });
+    
+    $("#addChat").click(function() {
+    	$.get("/addC");
+    });
+    
+    getMessages();
+    
+</script>
