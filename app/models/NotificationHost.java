@@ -50,11 +50,11 @@ public class NotificationHost {
 					}
 				};
 				
-				pollIntervalTimer.schedule(pollIntervalTimerTask, lastPublishTime + EVENT_POLL_INTERVAL - currentTime);
+				// pollIntervalTimer.schedule(pollIntervalTimerTask, lastPublishTime + EVENT_POLL_INTERVAL - currentTime);
 			}
 		}
 
-		public synchronized Promise<Event[]> getNotifications() {
+		public synchronized Promise<Event[]> getEvents() {
 			Promise<Event[]> promise = new Promise<Event[]>();
 			waiting.add(promise);
 			return promise;
@@ -65,9 +65,9 @@ public class NotificationHost {
 				return;
 			}
 
-			Event[] array = new Event[events.size()];
+			Event[] array = events.toArray(new Event[events.size()]);
 			for (Promise<Event[]> promise : waiting) {
-				promise.invoke(events.toArray(array));
+				promise.invoke(array.clone());
 			}
 			events.clear();
 			waiting.clear();

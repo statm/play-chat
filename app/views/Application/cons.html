@@ -1,0 +1,33 @@
+#{extends 'main.html' /}
+#{set title:'Notification' /}
+
+<script type="text/javascript">
+
+	var lastTime = new Date().getTime();
+
+    // Retrieve new messages
+    var getMessages = function() {
+        $.ajax({
+            url: "/getN",
+            success: function(events) {
+                console.log("============= interval time: " + (new Date().getTime() - lastTime) / 1000);
+        		lastTime = new Date().getTime();
+                
+                $(events).each(function() {
+                    display(this);
+                });
+                
+                getMessages();
+            },
+            dataType: 'json'
+        });
+    }
+    
+    // Display a message
+    var display = function(event) {
+        console.log(event);
+    }
+    
+    getMessages();
+    
+</script>

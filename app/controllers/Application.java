@@ -13,12 +13,20 @@ import models.NotificationHost.Chat;
 
 public class Application extends Controller {
 
-    public static void index() {
+	public static void index() {
+		render();
+	}
+	
+    public static void prod() {
         render();
     }
     
+    public static void cons() {
+    	render();
+    }
+    
     public static void getN() throws InterruptedException, ExecutionException {
-    	Event[] notifications = await(NotificationHost.get().stream.getNotifications());
+    	Event[] notifications = await(NotificationHost.get().stream.getEvents());
     	renderJSON(notifications);
     }
     
