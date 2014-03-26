@@ -29,13 +29,16 @@ public class NotificationHost {
 		private ConcurrentLinkedQueue<Event> events = new ConcurrentLinkedQueue<Event>();
 		private List<Promise<Event[]>> waiting = Collections.synchronizedList(new ArrayList<Promise<Event[]>>());
 
-		public void addEvent(Event event) {
+		public synchronized void addEvent(Event event) {
 			events.offer(event);
+			
+			System.out.println("1 waiting = " + waiting.size());
 			
 			Long currentTime = System.currentTimeMillis();
 			
 			if (currentTime - lastPublishTime > EVENT_POLL_INTERVAL
 				|| event.type == EventType.Chat) {
+				System.out.println("2 waiting = " + waiting.size());
 				publishEvents();
 			} else {
 				if (pollIntervalTimerTask != null) {
@@ -55,12 +58,15 @@ public class NotificationHost {
 		}
 
 		public synchronized Promise<Event[]> getEvents() {
+			System.out.println("3 waiting = " + waiting.size());
 			Promise<Event[]> promise = new Promise<Event[]>();
 			waiting.add(promise);
+			System.out.println("4 waiting = " + waiting.size());
 			return promise;
 		}
 
 		private void publishEvents() {
+			System.out.println("5 waiting = " + waiting.size());
 			if (waiting.size() == 0) {
 				return;
 			}
@@ -76,6 +82,7 @@ public class NotificationHost {
 				pollIntervalTimerTask.cancel();
 				pollIntervalTimerTask = null;
 			}
+			System.out.println("6 waiting = " + waiting.size());
 		}
 	}
 

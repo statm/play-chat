@@ -10,7 +10,8 @@
         $.ajax({
             url: "/getN",
             success: function(events) {
-                console.log("============= interval time: " + (new Date().getTime() - lastTime) / 1000);
+                // console.log("============= interval time: " + (new Date().getTime() - lastTime) / 1000);
+                document.write("============= interval time: " + (new Date().getTime() - lastTime) / 1000 + "<br/>");
         		lastTime = new Date().getTime();
                 
                 $(events).each(function() {
@@ -25,7 +26,8 @@
     
     // Display a message
     var display = function(event) {
-        console.log(event);
+        // console.log(event);
+        document.write(event.text + "<br/>");
     }
     
     getMessages();

@@ -26,6 +26,7 @@ public class Application extends Controller {
     }
     
     public static void getN() throws InterruptedException, ExecutionException {
+    	System.out.println(">>> client: getN");
     	Event[] notifications = await(NotificationHost.get().stream.getEvents());
     	renderJSON(notifications);
     }
