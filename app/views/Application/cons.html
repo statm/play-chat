@@ -4,11 +4,13 @@
 <script type="text/javascript">
 
 	var lastTime = new Date().getTime();
+	var last = 0;
 
     // Retrieve new messages
     var getMessages = function() {
         $.ajax({
-            url: "/getN",
+            url: "/g",
+            data: {"last": last},
             success: function(events) {
                 // console.log("============= interval time: " + (new Date().getTime() - lastTime) / 1000);
                 document.write("============= interval time: " + (new Date().getTime() - lastTime) / 1000 + "<br/>");
@@ -16,6 +18,7 @@
                 
                 $(events).each(function() {
                     display(this);
+                    last = this.id;
                 });
                 
                 getMessages();

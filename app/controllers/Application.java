@@ -1,15 +1,12 @@
 package controllers;
 
-import play.*;
-import play.mvc.*;
-
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import models.*;
-import models.NotificationHost.Event;
-import models.NotificationHost.Notification;
-import models.NotificationHost.Chat;
+import models.EventHost;
+import models.EventHost.Event;
+import play.mvc.Controller;
 
 public class Application extends Controller {
 
@@ -25,17 +22,12 @@ public class Application extends Controller {
     	render();
     }
     
-    public static void getN() throws InterruptedException, ExecutionException {
-    	System.out.println(">>> client: getN");
-    	Event[] notifications = await(NotificationHost.get().stream.getEvents());
-    	renderJSON(notifications);
+    public static void getMessage(Long last) throws InterruptedException, ExecutionException {
+    	List messages = await(EventHost.get().nextMessages(last));
+    	renderJSON(messages);
     }
     
-    public static void addN() {
-    	NotificationHost.get().stream.addEvent(new Notification("Notification at " + new Date().toString()));
-    }
-    
-    public static void addC() {
-    	NotificationHost.get().stream.addEvent(new Chat("Chat at " + new Date().toString()));
+    public static void addMessage() {
+    	EventHost.get().say();
     }
 }

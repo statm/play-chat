@@ -7,9 +7,8 @@ GET     /                                       Application.prod
 GET		/prod									Application.prod
 GET		/cons									Application.cons
 
-GET		/addN									Application.addN
-GET		/addC									Application.addC
-GET		/getN									Application.getN
+GET		/a										Application.addMessage
+GET		/g										Application.getMessage
 
 # Ignore favicon requests
 GET     /favicon.ico                            404
