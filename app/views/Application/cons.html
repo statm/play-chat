@@ -10,7 +10,7 @@
     var getMessages = function() {
         $.ajax({
             url: "/g",
-            data: {"last": last},
+            data: {"last": last}, 
             success: function(events) {
                 document.write("============= interval time: " + (new Date().getTime() - lastTime) / 1000 + "<br/>");
         		lastTime = new Date().getTime();
