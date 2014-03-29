@@ -3,6 +3,7 @@ package models;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -11,39 +12,22 @@ import java.util.concurrent.atomic.AtomicLong;
 import play.libs.F.Promise;
 
 public class MessageHost {
-
+	
 	// TODO: message interval
 	public static final int NOTIFICTION_INTERVAL = 5000;
 	public static final int CHAT_INTERVAL = 500;
-
-	private MessageStream<Message> stream = new MessageStream<Message>();
-
-	// ====================
-	// public methods
-	// ====================
-	public void addMessage() {
-		Message msg = new Notification();
-		this.stream.publish(msg);
-	}
-
-	public Promise<List<Message>> getMessages(long lastID) {
-		return this.stream.nextMessages(lastID);
-	}
-
-
-	// ====================
-	// singleton
-	// ====================
-	private static MessageHost instance = null;
-
-	public static MessageHost get() {
-		if (instance == null) {
-			instance = new MessageHost();
+	
+	private static final HashMap<String, MessageStream> streamMap = new HashMap<String, MessageStream>();
+	
+	public static MessageStream getMessageStream(String userID) {
+		MessageStream stream = streamMap.get(userID);
+		if (stream == null) {
+			stream = new MessageStream();
+			streamMap.put(userID, stream);
 		}
-		return instance;
+		return stream;
 	}
-
-
+	
 	// ========================================
 	// Message Classes
 	// ========================================
@@ -88,23 +72,23 @@ public class MessageHost {
 	// Class: MessageStream
 	// ========================================
 
-	public static class MessageStream<T extends Message> {
+	public static class MessageStream {
 
-		final ConcurrentLinkedQueue<T> messages = new ConcurrentLinkedQueue<T>();
-		final List<FilterTask<T>> waiting = Collections.synchronizedList(new ArrayList<FilterTask<T>>());
+		final ConcurrentLinkedQueue<Message> messages = new ConcurrentLinkedQueue<Message>();
+		final List<MessageFilter> waiting = Collections.synchronizedList(new ArrayList<MessageFilter>());
 
-		public synchronized Promise<List<T>> nextMessages(long lastEventSeen) {
-			FilterTask<T> filter = new FilterTask<T>(lastEventSeen);
+		public synchronized Promise<List<Message>> getMessages(long lastMessageID) {
+			MessageFilter filter = new MessageFilter(lastMessageID);
 			waiting.add(filter);
 			notifyNewMessages();
 			return filter;
 		}
 
 		// ?
-		public synchronized List<T> availableMessages(long lastEventSeen) {
-			List<T> result = new ArrayList<T>();
-			for (T message : messages) {
-				if (message.id > lastEventSeen) {
+		public synchronized List<Message> availableMessages(long lastMessageID) {
+			List<Message> result = new ArrayList<Message>();
+			for (Message message : messages) {
+				if (message.id > lastMessageID) {
 					result.add(message);
 				}
 			}
@@ -112,23 +96,23 @@ public class MessageHost {
 		}
 
 		// ?
-		public List<T> archive() {
-			List<T> result = new ArrayList<T>();
-			for (T event : messages) {
-				result.add(event);
+		public List<Message> archive() {
+			List<Message> result = new ArrayList<Message>();
+			for (Message message : messages) {
+				result.add(message);
 			}
 			return result;
 		}
 
-		public synchronized void publish(T event) {
-			messages.offer(event);
+		public synchronized void addMessage(Message message) {
+			messages.offer(message);
 			notifyNewMessages();
 		}
 
 		void notifyNewMessages() {
-			for (ListIterator<FilterTask<T>> it = waiting.listIterator(); it.hasNext();) {
-				FilterTask<T> filter = it.next();
-				for (T message : messages) {
+			for (ListIterator<MessageFilter> it = waiting.listIterator(); it.hasNext();) {
+				MessageFilter filter = it.next();
+				for (Message message : messages) {
 					filter.propose(message);
 				}
 				if (filter.trigger()) {
@@ -137,26 +121,26 @@ public class MessageHost {
 			}
 		}
 
-		static class FilterTask<K extends Message> extends Promise<List<K>> {
+		static class MessageFilter extends Promise<List<Message>> {
 
-			final Long lastEventSeen;
-			final List<K> newEvents = new ArrayList<K>();
+			final Long lastMessageID;
+			final List<Message> newMessages = new ArrayList<Message>();
 
-			public FilterTask(Long lastEventSeen) {
-				this.lastEventSeen = lastEventSeen;
+			public MessageFilter(Long lastMessageID) {
+				this.lastMessageID = lastMessageID;
 			}
 
-			public void propose(K event) {
-				if (event.id > lastEventSeen) {
-					newEvents.add(event);
+			public void propose(Message message) {
+				if (message.id > lastMessageID) {
+					newMessages.add(message);
 				}
 			}
 
 			public boolean trigger() {
-				if (newEvents.isEmpty()) {
+				if (newMessages.isEmpty()) {
 					return false;
 				}
-				invoke(newEvents);
+				invoke(newMessages);
 				return true;
 			}
 		}
