@@ -12,13 +12,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import play.libs.F.Promise;
 
 public class MessageHost {
-	
+
 	// TODO: message interval
 	public static final int NOTIFICTION_INTERVAL = 5000;
 	public static final int CHAT_INTERVAL = 500;
-	
+
 	private static final HashMap<String, MessageStream> streamMap = new HashMap<String, MessageStream>();
-	
+
 	public static MessageStream getMessageStream(String userID) {
 		MessageStream stream = streamMap.get(userID);
 		if (stream == null) {
@@ -26,45 +26,6 @@ public class MessageHost {
 			streamMap.put(userID, stream);
 		}
 		return stream;
-	}
-	
-	// ========================================
-	// Message Classes
-	// ========================================
-
-	public static abstract class Message {
-		private static final AtomicLong idGenerator = new AtomicLong(1);
-
-		public Date time;
-		public Long id;
-		public MessageType type;
-		// =
-		public String content;
-
-		public Message() {
-			this.time = new Date();
-			this.id = idGenerator.getAndIncrement();
-		}
-	}
-
-	public static enum MessageType {
-		NOTIFICATION, CHAT
-	}
-
-	public static class Notification extends Message {
-		public Notification() {
-			super();
-			this.type = MessageType.NOTIFICATION;
-			this.content = "Notification";
-		}
-	}
-
-	public static class Chat extends Message {
-		public Chat() {
-			super();
-			this.type = MessageType.CHAT;
-			this.content = "Chat";
-		}
 	}
 
 
@@ -143,6 +104,46 @@ public class MessageHost {
 				invoke(newMessages);
 				return true;
 			}
+		}
+	}
+
+
+	// ========================================
+	// Message Classes
+	// ========================================
+
+	public static abstract class Message {
+		private static final AtomicLong idGenerator = new AtomicLong(1);
+
+		public Date time;
+		public Long id;
+		public MessageType type;
+		// =
+		public String content;
+
+		public Message() {
+			this.time = new Date();
+			this.id = idGenerator.getAndIncrement();
+		}
+	}
+
+	public static enum MessageType {
+		NOTIFICATION, CHAT
+	}
+
+	public static class Notification extends Message {
+		public Notification() {
+			super();
+			this.type = MessageType.NOTIFICATION;
+			this.content = "Notification";
+		}
+	}
+
+	public static class Chat extends Message {
+		public Chat() {
+			super();
+			this.type = MessageType.CHAT;
+			this.content = "Chat";
 		}
 	}
 }
