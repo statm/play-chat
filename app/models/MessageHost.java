@@ -25,6 +25,10 @@ public class MessageHost {
 		}
 		return stream;
 	}
+	
+	public static boolean hasMessageStream(String userID) {
+		return streamMap.containsKey(userID);
+	}
 
 
 	// ========================================
