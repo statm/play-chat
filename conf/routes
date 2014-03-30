@@ -7,7 +7,8 @@ GET     /                                       Application.prod
 GET		/prod									Application.prod
 GET		/cons									Application.cons
 
-GET		/a										Application.addMessage
+POST	/aN										Application.addNotification
+POST	/aC										Application.addChat
 GET		/g										Application.getMessage
 
 # Ignore favicon requests

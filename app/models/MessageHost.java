@@ -6,16 +6,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 import play.libs.F.Promise;
 
 public class MessageHost {
-
-	// TODO: message interval
-	public static final int NOTIFICTION_INTERVAL = 5000;
-	public static final int CHAT_INTERVAL = 500;
 
 	private static final HashMap<String, MessageStream> streamMap = new HashMap<String, MessageStream>();
 
@@ -34,40 +32,47 @@ public class MessageHost {
 	// ========================================
 
 	public static class MessageStream {
-
-		final ConcurrentLinkedQueue<Message> messages = new ConcurrentLinkedQueue<Message>();
-		final List<MessageFilter> waiting = Collections.synchronizedList(new ArrayList<MessageFilter>());
+		
+		private final ConcurrentLinkedQueue<Message> messages = new ConcurrentLinkedQueue<Message>();
+		private final List<MessageFilter> waiting = Collections.synchronizedList(new ArrayList<MessageFilter>());
+		
+		private TimerTask timeoutTask;
+		private Timer timeoutTimer;
+		private long lastPushTime = 0L;
+		private long nextPushTime = Long.MAX_VALUE;
+		
+		public MessageStream() {
+			this.timeoutTimer = new Timer("MessageStream.timeout", true);
+		}
 
 		public synchronized Promise<List<Message>> getMessages(long lastMessageID) {
 			MessageFilter filter = new MessageFilter(lastMessageID);
 			waiting.add(filter);
-			notifyNewMessages();
+			notifyNewMessages(filter);
 			return filter;
-		}
-
-		// ?
-		public synchronized List<Message> availableMessages(long lastMessageID) {
-			List<Message> result = new ArrayList<Message>();
-			for (Message message : messages) {
-				if (message.id > lastMessageID) {
-					result.add(message);
-				}
-			}
-			return result;
-		}
-
-		// ?
-		public List<Message> archive() {
-			List<Message> result = new ArrayList<Message>();
-			for (Message message : messages) {
-				result.add(message);
-			}
-			return result;
 		}
 
 		public synchronized void addMessage(Message message) {
 			messages.offer(message);
-			notifyNewMessages();
+			
+			long currentTime = System.currentTimeMillis();
+			nextPushTime = Math.min(nextPushTime, lastPushTime + message.interval);
+			
+			if (currentTime > nextPushTime) {
+				notifyNewMessages();
+			} else {
+				if (timeoutTask != null) {
+					timeoutTask.cancel();
+				}
+				
+				this.timeoutTask = new TimerTask() {
+					@Override
+					public void run() {
+						notifyNewMessages();
+					}
+				};
+				timeoutTimer.schedule(timeoutTask, nextPushTime - currentTime);
+			}
 		}
 
 		void notifyNewMessages() {
@@ -80,7 +85,37 @@ public class MessageHost {
 					it.remove();
 				}
 			}
+			
+			lastPushTime = System.currentTimeMillis();
+			nextPushTime = Long.MAX_VALUE;
 		}
+
+		void notifyNewMessages(MessageFilter filter) {
+			for (Message message : messages) {
+				filter.propose(message);
+			}
+			if (filter.trigger()) {
+				waiting.remove(filter);
+			}
+		}
+		
+//		public synchronized List<Message> availableMessages(long lastMessageID) {
+//			List<Message> result = new ArrayList<Message>();
+//			for (Message message : messages) {
+//				if (message.id > lastMessageID) {
+//					result.add(message);
+//				}
+//			}
+//			return result;
+//		}
+//
+//		public List<Message> archive() {
+//			List<Message> result = new ArrayList<Message>();
+//			for (Message message : messages) {
+//				result.add(message);
+//			}
+//			return result;
+//		}
 
 		static class MessageFilter extends Promise<List<Message>> {
 
@@ -116,8 +151,9 @@ public class MessageHost {
 		private static final AtomicLong idGenerator = new AtomicLong(1);
 
 		public Date time;
-		public Long id;
+		public long id;
 		public MessageType type;
+		public long interval;
 		// =
 		public String content;
 
@@ -136,6 +172,7 @@ public class MessageHost {
 			super();
 			this.type = MessageType.NOTIFICATION;
 			this.content = "Notification";
+			this.interval = 3000;
 		}
 	}
 
@@ -144,6 +181,7 @@ public class MessageHost {
 			super();
 			this.type = MessageType.CHAT;
 			this.content = "Chat";
+			this.interval = 500;
 		}
 	}
 }

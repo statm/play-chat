@@ -3,6 +3,7 @@ package controllers;
 import java.util.List;
 
 import models.MessageHost;
+import models.MessageHost.Chat;
 import models.MessageHost.Notification;
 import play.mvc.Controller;
 
@@ -25,8 +26,13 @@ public class Application extends Controller {
 		renderJSON(messages);
 	}
 
-	public static void addMessage() {
+	public static void addNotification() {
 		Notification n = new Notification();
 		MessageHost.getMessageStream("test").addMessage(n);
+	}
+	
+	public static void addChat() {
+		Chat c = new Chat();
+		MessageHost.getMessageStream("test").addMessage(c);
 	}
 }
