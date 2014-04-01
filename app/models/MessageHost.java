@@ -103,24 +103,6 @@ public class MessageHost {
 			}
 		}
 		
-//		public synchronized List<Message> availableMessages(long lastMessageID) {
-//			List<Message> result = new ArrayList<Message>();
-//			for (Message message : messages) {
-//				if (message.id > lastMessageID) {
-//					result.add(message);
-//				}
-//			}
-//			return result;
-//		}
-//
-//		public List<Message> archive() {
-//			List<Message> result = new ArrayList<Message>();
-//			for (Message message : messages) {
-//				result.add(message);
-//			}
-//			return result;
-//		}
-
 		static class MessageFilter extends Promise<List<Message>> {
 
 			final Long lastMessageID;
